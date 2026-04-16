@@ -9,12 +9,19 @@ app.use(express.json());
 
 const getRedirectUri = (req?: express.Request) => {
   let baseUrl = process.env.APP_URL;
+  
+  if (!baseUrl && req) {
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || (host?.includes('localhost') ? 'http' : 'https');
+    if (host) {
+      baseUrl = `${protocol}://${host}`;
+    }
+  }
+  
   if (!baseUrl && process.env.VERCEL_URL) {
     baseUrl = `https://${process.env.VERCEL_URL}`;
   }
-  if (!baseUrl && req) {
-    baseUrl = `${req.protocol}://${req.get('host')}`;
-  }
+  
   baseUrl = (baseUrl || '').replace(/\/$/, '');
   return `${baseUrl}/auth/callback`;
 };
