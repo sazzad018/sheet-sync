@@ -6,6 +6,10 @@
       "destination": "/api/index.ts"
     },
     {
+      "source": "/auth/callback",
+      "destination": "/api/index.ts"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
