@@ -1,0 +1,6 @@
+{
+  "name": "Mail to Sheets Sync",
+  "description": "Collect emails from Gmail and export them to a Google Spreadsheet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
