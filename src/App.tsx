@@ -79,7 +79,10 @@ export default function App() {
   const handleConnect = async () => {
     try {
       const response = await fetch('/api/auth/url');
-      if (!response.ok) throw new Error('Failed to get auth URL');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get auth URL');
+      }
       const { url } = await response.json();
 
       const authWindow = window.open(
@@ -91,9 +94,9 @@ export default function App() {
       if (!authWindow) {
         toast.error('Please allow popups for this site to connect your account.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('OAuth error:', error);
-      toast.error('Failed to initiate connection.');
+      toast.error(error.message || 'Failed to initiate connection.');
     }
   };
 

@@ -20,6 +20,9 @@ const getRedirectUri = () => {
 };
 
 const getOAuthClient = (redirectUri: string) => {
+  if (!process.env.OAUTH_CLIENT_ID || !process.env.OAUTH_CLIENT_SECRET) {
+    throw new Error('OAuth credentials (OAUTH_CLIENT_ID or OAUTH_CLIENT_SECRET) are missing in environment variables.');
+  }
   return new google.auth.OAuth2(
     process.env.OAUTH_CLIENT_ID,
     process.env.OAUTH_CLIENT_SECRET,
@@ -72,14 +75,19 @@ const getEmailBody = (payload: any): string => {
 };
 
 app.get('/api/auth/url', (req, res) => {
-  const redirectUri = getRedirectUri();
-  const oauth2Client = getOAuthClient(redirectUri);
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent'
-  });
-  res.json({ url: authUrl });
+  try {
+    const redirectUri = getRedirectUri();
+    const oauth2Client = getOAuthClient(redirectUri);
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent'
+    });
+    res.json({ url: authUrl });
+  } catch (error: any) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate auth URL' });
+  }
 });
 
 app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
