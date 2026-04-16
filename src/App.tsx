@@ -25,11 +25,19 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  const [senderEmail, setSenderEmail] = useState('');
-  const [spreadsheetId, setSpreadsheetId] = useState('');
-  const [sheetName, setSheetName] = useState('Sheet1');
-  const [autoSync, setAutoSync] = useState(false);
+  const [senderEmail, setSenderEmail] = useState(() => localStorage.getItem('config_senderEmail') || '');
+  const [spreadsheetId, setSpreadsheetId] = useState(() => localStorage.getItem('config_spreadsheetId') || '');
+  const [sheetName, setSheetName] = useState(() => localStorage.getItem('config_sheetName') || 'Sheet1');
+  const [autoSync, setAutoSync] = useState(() => localStorage.getItem('config_autoSync') === 'true');
   const [syncedEmails, setSyncedEmails] = useState<SyncedEmail[]>([]);
+
+  // Persist config changes
+  useEffect(() => {
+    localStorage.setItem('config_senderEmail', senderEmail);
+    localStorage.setItem('config_spreadsheetId', spreadsheetId);
+    localStorage.setItem('config_sheetName', sheetName);
+    localStorage.setItem('config_autoSync', String(autoSync));
+  }, [senderEmail, spreadsheetId, sheetName, autoSync]);
 
   useEffect(() => {
     // Handle OAuth callback directly in the frontend if we land here
