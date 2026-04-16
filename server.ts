@@ -2,7 +2,6 @@ import express from 'express';
 import { google } from 'googleapis';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI, Type } from '@google/genai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,12 +9,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000;
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 app.use(express.json());
 
-const getRedirectUri = () => {
-  const baseUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+const getRedirectUri = (req?: express.Request) => {
+  let baseUrl = process.env.APP_URL;
+  if (!baseUrl && process.env.VERCEL_URL) {
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  }
+  if (!baseUrl && req) {
+    baseUrl = `${req.protocol}://${req.get('host')}`;
+  }
+  baseUrl = (baseUrl || '').replace(/\/$/, '');
   return `${baseUrl}/auth/callback`;
 };
 
@@ -76,7 +80,7 @@ const getEmailBody = (payload: any): string => {
 
 app.get('/api/auth/url', (req, res) => {
   try {
-    const redirectUri = getRedirectUri();
+    const redirectUri = getRedirectUri(req);
     const oauth2Client = getOAuthClient(redirectUri);
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
@@ -97,7 +101,7 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   }
 
   try {
-    const redirectUri = getRedirectUri();
+    const redirectUri = getRedirectUri(req);
     const oauth2Client = getOAuthClient(redirectUri);
     const { tokens } = await oauth2Client.getToken(code);
     
