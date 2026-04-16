@@ -32,6 +32,41 @@ export default function App() {
   const [syncedEmails, setSyncedEmails] = useState<SyncedEmail[]>([]);
 
   useEffect(() => {
+    // Handle OAuth callback directly in the frontend if we land here
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code && window.location.pathname.includes('/auth/callback')) {
+      // We are in the popup window, but Vercel routed us to the frontend instead of the backend
+      // We need to send this code to our backend API to exchange for tokens
+      setIsLoading(true);
+      fetch(`/api/exchange-token?code=${encodeURIComponent(code)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.tokens) {
+            if (window.opener) {
+              window.opener.postMessage({ 
+                type: 'OAUTH_AUTH_SUCCESS',
+                tokens: data.tokens
+              }, '*');
+              window.close();
+            } else {
+              localStorage.setItem('google_tokens', JSON.stringify(data.tokens));
+              window.location.href = '/';
+            }
+          } else {
+            toast.error('Failed to exchange token');
+            setIsLoading(false);
+          }
+        })
+        .catch(err => {
+          console.error('Token exchange error:', err);
+          toast.error('Error connecting to Google');
+          setIsLoading(false);
+        });
+      return;
+    }
+
     // Check local storage for tokens
     const storedTokens = localStorage.getItem('google_tokens');
     if (storedTokens) {

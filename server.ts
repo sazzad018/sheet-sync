@@ -97,6 +97,23 @@ app.get('/api/auth/url', (req, res) => {
   }
 });
 
+app.get('/api/exchange-token', async (req, res) => {
+  const { code } = req.query;
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'No code provided' });
+  }
+
+  try {
+    const redirectUri = getRedirectUri(req);
+    const oauth2Client = getOAuthClient(redirectUri);
+    const { tokens } = await oauth2Client.getToken(code);
+    res.json({ tokens });
+  } catch (error: any) {
+    console.error('Token exchange error:', error);
+    res.status(500).json({ error: error.message || 'Failed to exchange token' });
+  }
+});
+
 app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   const { code } = req.query;
   if (!code || typeof code !== 'string') {
